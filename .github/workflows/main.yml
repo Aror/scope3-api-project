@@ -22,4 +22,6 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Run tests
+        env:
+          SCOPE3_API_KEY: "test"
         run: bun test
