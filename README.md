@@ -1,5 +1,20 @@
 # Scope3 Take Home Assessment
 
+### Implementation Highlights
+
+Here is a summary of the work done for this assessment, ready for review:
+
+- **Full Feature Set**: Implemented `/emissions/day`, `/emissions/week`, and `/emissions/month` with complete aggregation logic (high, low, average, total).
+- **Performance**: Utilized `Promise.all` to fetch data in parallel for the week (7 calls) and month (~30 calls) endpoints, ensuring responses stay well under the 30s timeout.
+- **Robust Validation**:
+  - Implemented strictly typed Zod schemas.
+  - Added specific validators to prevent future dates (returning 422) and ensure correct date formats.
+- **Architecture**:
+  - Refactored the monolithic router into modular files (`day.ts`, `week.ts`, `month.ts`).
+  - Created a shared `formatter.ts` service to standardize response shapes across endpoints.
+- **CI/CD**: API tests run automatically on every Pull Request using GitHub Actions.
+- **Testing**: Added unit tests for all routes covering success paths, edge cases (future dates), and malformed inputs.
+
 ### Set Up
 
 This project uses Bun, to install it, run:
