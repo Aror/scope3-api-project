@@ -21,12 +21,24 @@ router.get(
     const dates = monthDatesFromMonth(date)
 
     try {
-      const results = await Promise.all(
+      const response = await Promise.allSettled(
         dates.map(async (d) => {
-          const r = await MeasureAPI.measure([domain], d)
-          return { value: r.totalEmissions ?? 0, date: d }
+          try {
+            const r = await MeasureAPI.measure([domain], d)
+            return { value: r.totalEmissions ?? 0, date: d }
+          } catch (err) {
+            logger.error(
+              { err, domain, date: d },
+              'MeasureAPI failed for route /month'
+            )
+            throw err
+          }
         })
       )
+
+      const results = response
+        .filter((r) => r.status === 'fulfilled')
+        .map((r) => r.value)
 
       const { totalEmissions, high, low, average } =
         formatEmissionsData(results)

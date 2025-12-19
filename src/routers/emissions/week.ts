@@ -20,12 +20,23 @@ router.get(
     const dates = weekDatesFromDate(date)
 
     try {
-      const results = await Promise.all(
+      const response = await Promise.allSettled(
         dates.map(async (d) => {
-          const r = await MeasureAPI.measure([domain], d)
-          return { value: r.totalEmissions ?? 0, date }
+          try {
+            const r = await MeasureAPI.measure([domain], d)
+            return { value: r.totalEmissions ?? 0, date }
+          } catch (err) {
+            logger.error(
+              { err, domain, date: d },
+              'MeasureAPI failed for route /week'
+            )
+            throw err
+          }
         })
       )
+      const results = response
+        .filter((r) => r.status === 'fulfilled')
+        .map((r) => r.value)
 
       const { totalEmissions, high, low, average } =
         formatEmissionsData(results)
