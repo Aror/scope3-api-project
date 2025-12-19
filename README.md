@@ -5,7 +5,7 @@
 Here is a summary of the work done for this assessment, ready for review:
 
 - **Full Feature Set**: Implemented `/emissions/day`, `/emissions/week`, and `/emissions/month` with complete aggregation logic (high, low, average, total).
-- **Performance**: Utilized `Promise.all` to fetch data in parallel for the week (7 calls) and month (~30 calls) endpoints, ensuring responses stay well under the 30s timeout.
+- **Performance**: Utilized `Promise.allSettled` to fetch data in parallel for the week (7 calls) and month (~30 calls) endpoints, ensuring responses stay well under the 30s timeout.
 - **Robust Validation**:
   - Implemented strictly typed Zod schemas.
   - Added specific validators to prevent future dates (returning 422) and ensure correct date formats.
