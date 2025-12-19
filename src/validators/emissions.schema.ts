@@ -6,3 +6,8 @@ export const emissionsDayQuerySchema = z.object({
   domain: domainSchema,
   date: dayDateSchema,
 })
+
+export const emissionsWeekQuerySchema = z.object({
+  domain: domainSchema,
+  date: dayDateSchema,
+})

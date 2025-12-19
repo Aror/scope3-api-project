@@ -3,7 +3,11 @@ import { Router } from 'express'
 import MeasureAPI from '@/services/measure/api'
 import { logger } from '@/logger'
 import { validateQuery } from '../../middleware/validation'
-import { emissionsDayQuerySchema } from '../../validators/emissions.schema'
+import {
+  emissionsDayQuerySchema,
+  emissionsWeekQuerySchema,
+} from '../../validators/emissions.schema'
+import { weekDatesFromDate } from '../../utils/date'
 
 const router = Router({ mergeParams: true, strict: true })
 
@@ -21,7 +25,6 @@ router.get('/day', validateQuery(emissionsDayQuerySchema), async (req, res) => {
     // Lack of upstream data is a valid outcome, not a missing resource.
     res.json({ totalEmissions, domain, date })
   } catch (error) {
-    //add error logging here and the other 3 requests
     logger.error(
       { error, domain, date },
       'Measure API failed for /emissions/day'
@@ -31,19 +34,64 @@ router.get('/day', validateQuery(emissionsDayQuerySchema), async (req, res) => {
   }
 })
 
-router.get('/week', async (req, res) => {
-  const { domain, date } = req.query as { domain: string; date: string }
+router.get(
+  '/week',
+  validateQuery(emissionsWeekQuerySchema),
+  async (req, res) => {
+    const { date, domain } = res.locals.query as {
+      date: string
+      domain: string
+    }
 
-  // TODO - Implement the logic to sum `totalEmissions` for the given domain's emissions for the week
-  // the date is the start of the week
-  res.json({
-    domain,
-    dates: [],
-    totalEmissions: 0,
-    high: { value: 0, date: '' },
-    low: { value: 0, date: '' },
-  })
-})
+    const dates = weekDatesFromDate(date)
+
+    try {
+      const results = await Promise.all(
+        dates.map(async (d) => {
+          const r = await MeasureAPI.measure([domain], d)
+          return { value: r.totalEmissions ?? 0, date }
+        })
+      )
+
+      const totalEmissions = results.reduce((prev, current) => {
+        return prev + current.value
+      }, 0)
+
+      const high = results.reduce(
+        (prev, current) => {
+          return current.value > prev.value
+            ? { value: current.value, date: current.date }
+            : prev
+        },
+        { value: results[0]?.value || 0, date: results[0]?.date }
+      )
+
+      const low = results.reduce(
+        (prev, current) => {
+          return current.value < prev.value
+            ? { value: current.value, date: current.date }
+            : prev
+        },
+        { value: results[0]?.value || 0, date: results[0]?.date }
+      )
+
+      res.json({
+        domain,
+        dates,
+        totalEmissions,
+        high,
+        low,
+      })
+    } catch (error) {
+      logger.error(
+        { error, domain, date },
+        'Measure API failed for /emissions/week'
+      )
+
+      res.status(500).json({ error: 'Internal server error' })
+    }
+  }
+)
 
 router.get('/month', async (req, res) => {
   const { domain, date: month } = req.query as {
