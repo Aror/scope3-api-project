@@ -74,4 +74,16 @@ describe('Emissions Router', () => {
       expect(response.status).toBe(400)
     })
   })
+
+  describe('GET /week', () => {
+    test('should return 200 and aggregated data for valid request', async () => {
+      ;(MeasureAPI.measure as any).mockResolvedValue({ totalEmissions: 100 })
+
+      const response = await request(app)
+        .get('/emissions/week')
+        .query({ domain: 'scope3.com', date: '2023-01-01' })
+
+      expect(response.status).toBe(200)
+    })
+  })
 })
