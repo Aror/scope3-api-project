@@ -8,19 +8,24 @@ export const monthIncludesFutureDates = (month: string) => {
   return month >= todayMonth
 }
 
+const formatYMDLocal = (d: Date) => {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+const getLocalYesterday = () => {
+  const now = new Date()
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+}
+
 export const weekDatesFromDate = (ymd: string) => {
   const parseYMDLocal = (s: string) => {
     const y = Number(s.slice(0, 4))
     const m = Number(s.slice(5, 7)) - 1
     const d = Number(s.slice(8, 10))
     return new Date(y, m, d)
-  }
-
-  const formatYMDLocal = (d: Date) => {
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${y}-${m}-${day}`
   }
 
   const startOfWeek = (d: Date) => {
@@ -32,11 +37,7 @@ export const weekDatesFromDate = (ymd: string) => {
   }
 
   const input = parseYMDLocal(ymd)
-
-  const now = new Date()
-  const todayLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const yesterdayLocal = new Date(todayLocal)
-  yesterdayLocal.setDate(yesterdayLocal.getDate() - 1)
+  const yesterdayLocal = getLocalYesterday()
 
   const weekStart = startOfWeek(input)
   const weekEnd = new Date(weekStart)
@@ -52,5 +53,36 @@ export const weekDatesFromDate = (ymd: string) => {
   for (let d = new Date(weekStart); d <= end; d.setDate(d.getDate() + 1)) {
     result.push(formatYMDLocal(d))
   }
+  return result
+}
+
+export const monthDatesFromMonth = (ym: string) => {
+  const parseYMLocal = (s: string) => {
+    const y = Number(s.slice(0, 4))
+    const m = Number(s.slice(5, 7)) - 1
+    return new Date(y, m, 1) // first day of month
+  }
+
+  const monthStart = parseYMLocal(ym)
+
+  const yesterdayLocal = getLocalYesterday()
+
+  const monthEnd = new Date(
+    monthStart.getFullYear(),
+    monthStart.getMonth() + 1,
+    0 // last day of month
+  )
+
+  // If this month reaches into today/future, stop at yesterday
+  const end = monthEnd > yesterdayLocal ? yesterdayLocal : monthEnd
+
+  // If monthStart is today or later, no valid dates
+  if (end < monthStart) return []
+
+  const result: string[] = []
+  for (let d = new Date(monthStart); d <= end; d.setDate(d.getDate() + 1)) {
+    result.push(formatYMDLocal(d))
+  }
+
   return result
 }

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { isNotFutureDate } from '../utils/date'
+import { isNotFutureDate, monthIncludesFutureDates } from '../utils/date'
 
 export const dayDateSchema = z.iso.date().superRefine((date, ctx) => {
   if (!isNotFutureDate(date)) {
@@ -10,3 +10,16 @@ export const dayDateSchema = z.iso.date().superRefine((date, ctx) => {
     })
   }
 })
+
+export const monthSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}$/, 'Invalid month format (YYYY-MM)')
+  .superRefine((month, ctx) => {
+    if (monthIncludesFutureDates(month)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Month includes future dates',
+        params: { httpStatus: 422 },
+      })
+    }
+  })
